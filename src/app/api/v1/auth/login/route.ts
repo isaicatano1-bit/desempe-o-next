@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 
 import { loginSchema } from '@/features/auth/schemas/auth.schema';
 import { AuthError, authService } from '@/features/auth/services/auth.service';
+import { authCookieNames } from '@/lib/auth/session';
 
 export async function POST(request: Request) {
   try {
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
     const result = await authService.login(parsed.data);
     const cookieStore = await cookies();
 
-    cookieStore.set('cospace_access', result.accessToken, {
+    cookieStore.set(authCookieNames.accessToken, result.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
       maxAge: 15 * 60,
     });
 
-    cookieStore.set('cospace_refresh', result.refreshToken, {
+    cookieStore.set(authCookieNames.refreshToken, result.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -44,6 +45,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         message: 'Login successful.',
+        role: result.user.role,
         user: result.user,
       },
       { status: 200 },

@@ -84,6 +84,37 @@ export async function createReservationRecord(userId: string, input: CreateReser
     throw new Error('Reservation length must be greater than zero.');
   }
 
+  if (!Number.isInteger(durationInHours) || durationInHours < 1 || durationInHours > 4) {
+    throw new Error('Reservation duration must be between 1 and 4 full hours.');
+  }
+
+  const startHour = input.startAt.getHours();
+  const endHour = input.endAt.getHours();
+
+  if (startHour < 7 || endHour > 21 || startHour >= 21) {
+    throw new Error('Reservations are allowed only between 07:00 and 21:00.');
+  }
+
+  const maxFutureDate = new Date();
+  maxFutureDate.setDate(maxFutureDate.getDate() + 30);
+
+  if (input.startAt > maxFutureDate) {
+    throw new Error('Reservations cannot be scheduled more than 30 days in advance.');
+  }
+
+  const now = new Date();
+  const userFutureCount = await prisma.reservation.count({
+    where: {
+      userId,
+      status: { not: 'CANCELLED' },
+      startAt: { gt: now },
+    },
+  });
+
+  if (userFutureCount >= 3) {
+    throw new Error('You already have the maximum of 3 future reservations.');
+  }
+
   return withSpaceLock(input.spaceId, async (tx) => {
     const space = await tx.space.findUnique({
       where: { id: input.spaceId },
@@ -176,6 +207,13 @@ export async function cancelReservationRecord(id: string): Promise<Reservation> 
 
   if (!current) {
     throw new Error('Reservation not found.');
+  }
+
+  const now = new Date();
+  const hoursUntilStart = (current.startAt.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+  if (hoursUntilStart < 2) {
+    throw new Error('Cancellation is only allowed up to 2 hours before the reservation starts.');
   }
 
   return withSpaceLock(current.spaceId, async (tx) => {

@@ -1,5 +1,6 @@
 import type { Prisma, Space } from '@prisma/client';
 
+import { prisma } from '@/lib/db/prisma';
 import {
   countSpaces,
   createSpace,
@@ -52,6 +53,28 @@ export async function createSpaceRecord(input: CreateSpaceInput): Promise<Space>
 }
 
 export async function updateSpaceRecord(id: string, input: UpdateSpaceInput): Promise<Space> {
+  const existing = await getSpaceById(id);
+
+  if (!existing) {
+    throw new Error('Space not found.');
+  }
+
+  const isDisabling = input.isActive === false;
+
+  if (isDisabling) {
+    const futureConfirmedReservation = await prisma.reservation.findFirst({
+      where: {
+        spaceId: id,
+        status: 'CONFIRMED',
+        startAt: { gt: new Date() },
+      },
+    });
+
+    if (futureConfirmedReservation) {
+      throw new Error('Cannot deactivate a space with future confirmed reservations.');
+    }
+  }
+
   return updateSpaceById(id, input as Prisma.SpaceUpdateInput);
 }
 

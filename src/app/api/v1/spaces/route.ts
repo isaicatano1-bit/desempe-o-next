@@ -25,6 +25,8 @@ async function requireAdminAccess() {
 
 export async function GET(request: Request) {
   try {
+    await requireAdminAccess();
+
     const url = new URL(request.url);
     const query = {
       page: url.searchParams.get('page') ?? '1',

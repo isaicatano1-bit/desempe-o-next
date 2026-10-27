@@ -25,18 +25,30 @@ export type RefreshTokenPayload = {
   iat?: number;
 };
 
-function getRequiredSecret(name: string): Uint8Array {
-  const secret = process.env[name];
+export function resolveJwtSecret(name: string): string {
+  const secret = process.env[name] ?? '';
 
-  if (!secret) {
-    throw new Error(`${name} is not set. Add a secure secret to your local environment.`);
+  if (!secret || secret === 'REPLACE_WITH_A_RANDOM_SECRET' || secret === 'REPLACE_WITH_A_DIFFERENT_RANDOM_SECRET') {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`${name} is not set. Add a secure secret to your local environment.`);
+    }
+
+    return `dev-${name}-fallback-secret-32-bytes`;
   }
 
   if (secret.length < 32) {
-    throw new Error(`${name} must be at least 32 characters long.`);
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error(`${name} must be at least 32 characters long.`);
+    }
+
+    return secret.padEnd(32, 'x');
   }
 
-  return new TextEncoder().encode(secret);
+  return secret;
+}
+
+function getRequiredSecret(name: string): Uint8Array {
+  return new TextEncoder().encode(resolveJwtSecret(name));
 }
 
 export function hashToken(token: string): string {

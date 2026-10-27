@@ -1,6 +1,27 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 :root {
   color-scheme: light;
-  font-family: Arial, Helvetica, sans-serif;
+  --color-page: #f7f6f2;
+  --color-surface: #ffffff;
+  --color-primary: #245642;
+  --color-primary-soft: #eaf1e9;
+  --color-text: #222d28;
+  --color-muted: #727970;
+  --color-border: #deded5;
+  --color-warn-bg: #f1e8d9;
+  --color-warn-text: #826031;
+  --color-map-bg: #ebede4;
+  --color-map-green: #d8e0cc;
+  --color-error-bg: #f6e4e1;
+  --color-error-text: #a33b32;
+  --shadow-soft: 0 10px 24px rgba(22, 31, 26, 0.04);
+  --shadow-card: 0 18px 36px rgba(36, 86, 66, 0.08);
+  font-family: 'Inter', sans-serif;
 }
 
 html,
@@ -8,13 +29,40 @@ body {
   margin: 0;
   padding: 0;
   min-height: 100%;
+  background: var(--color-page);
+  color: var(--color-text);
 }
 
 body {
-  background: #f8fafc;
-  color: #0f172a;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 * {
   box-sizing: border-box;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+a {
+  text-decoration: none;
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply text-[color:var(--color-text)] m-0;
+  }
+
+  p {
+    @apply m-0;
+  }
 }

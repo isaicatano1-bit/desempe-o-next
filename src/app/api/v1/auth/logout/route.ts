@@ -27,10 +27,5 @@ export async function POST() {
     maxAge: 0,
   });
 
-  return NextResponse.json(
-    {
-      message: 'Logged out successfully.',
-    },
-    { status: 200 },
-  );
+  return NextResponse.redirect(new URL('/login', process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'));
 }
