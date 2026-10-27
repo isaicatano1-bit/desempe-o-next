@@ -12,6 +12,7 @@ vi.mock('@/lib/db/prisma', () => ({
       findUnique: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     space: {
       findUnique: vi.fn(),
@@ -53,6 +54,7 @@ describe('reservation concurrency guards', () => {
           create: vi.fn(),
           findUnique: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
       };
 
@@ -97,6 +99,7 @@ describe('reservation concurrency guards', () => {
           }),
           findUnique: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
       };
 

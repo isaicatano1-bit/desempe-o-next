@@ -1,32 +1,12 @@
 import type { Prisma } from '@prisma/client';
 
+import {
+  safeUserSelect,
+  userWithPasswordSelect,
+  type SafeUserRecord,
+  type UserWithPasswordRecord,
+} from '@/features/auth/types/user';
 import { prisma } from '@/lib/db/prisma';
-
-const userWithPasswordSelect = {
-  id: true,
-  name: true,
-  email: true,
-  passwordHash: true,
-  role: true,
-  createdAt: true,
-  updatedAt: true,
-} satisfies Prisma.UserSelect;
-
-const safeUserSelect = {
-  id: true,
-  name: true,
-  email: true,
-  role: true,
-  createdAt: true,
-} satisfies Prisma.UserSelect;
-
-export type SafeUserRecord = Prisma.UserGetPayload<{
-  select: typeof safeUserSelect;
-}>;
-
-export type UserWithPasswordRecord = Prisma.UserGetPayload<{
-  select: typeof userWithPasswordSelect;
-}>;
 
 export async function findUserByEmail(email: string): Promise<UserWithPasswordRecord | null> {
   return prisma.user.findUnique({

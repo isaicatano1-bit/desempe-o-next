@@ -10,11 +10,12 @@ import {
   findRefreshTokenByHash,
   findUserById,
   revokeRefreshToken,
-  type SafeUserRecord,
 } from '@/features/auth/repositories/auth.repository';
+import type { LoginInput, RegisterInput } from '@/features/auth/schemas/auth.schema';
+import type { SafeUserRecord } from '@/features/auth/types/user';
 import { createAccessToken, createRefreshToken as createRefreshJwt, hashToken, verifyRefreshToken } from '@/lib/auth/tokens';
 import { prisma } from '@/lib/db/prisma';
-import type { LoginInput, RegisterInput } from '@/features/auth/schemas/auth.schema';
+import type { AuthResult, SafeUser } from '@/types';
 
 export class AuthError extends Error {
   status: number;
@@ -25,8 +26,6 @@ export class AuthError extends Error {
     this.status = status;
   }
 }
-
-export type SafeUser = SafeUserRecord;
 
 export async function registerUser(input: RegisterInput): Promise<SafeUser> {
   const existingUser = await findUserByEmail(input.email);
@@ -52,11 +51,7 @@ export async function registerUser(input: RegisterInput): Promise<SafeUser> {
   }
 }
 
-export async function loginUser(input: LoginInput): Promise<{
-  user: SafeUser;
-  accessToken: string;
-  refreshToken: string;
-}> {
+export async function loginUser(input: LoginInput): Promise<AuthResult> {
   const user = await findUserByEmail(input.email);
 
   if (!user) {
@@ -91,11 +86,7 @@ export async function loginUser(input: LoginInput): Promise<{
   };
 }
 
-export async function refreshSession(refreshTokenValue: string): Promise<{
-  user: SafeUser;
-  accessToken: string;
-  refreshToken: string;
-}> {
+export async function refreshSession(refreshTokenValue: string): Promise<AuthResult> {
   const payload = await verifyRefreshToken(refreshTokenValue);
 
   if (!payload.sub) {

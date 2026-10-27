@@ -1,6 +1,7 @@
 import { Prisma } from '@prisma/client';
 
 import { createReservationSchema } from '@/features/reservations/schemas/reservation.schema';
+import { HOLD_EXPIRED, ReservationAvailabilityError, SLOT_UNAVAILABLE, expireStaleReservationHolds, findBlockingReservation } from '@/features/reservations/services/availability';
 import { prisma } from '@/lib/db/prisma';
 import { getReservationHoldDurationMinutes } from '@/lib/config/reservation-hold';
 
@@ -25,27 +26,6 @@ async function withLockedSpace<T>(spaceId: string, callback: (tx: Prisma.Transac
   });
 }
 
-async function findBlockingReservation(tx: Prisma.TransactionClient, spaceId: string, startAt: Date, endAt: Date, excludeReservationId?: string) {
-  return tx.reservation.findFirst({
-    where: {
-      spaceId,
-      ...(excludeReservationId ? { id: { not: excludeReservationId } } : {}),
-      OR: [
-        {
-          status: 'CONFIRMED',
-          startAt: { lt: endAt },
-          endAt: { gt: startAt },
-        },
-        {
-          status: 'IN_PROCESS',
-          expiresAt: { gt: new Date() },
-          startAt: { lt: endAt },
-          endAt: { gt: startAt },
-        },
-      ],
-    },
-  });
-}
 
 export async function createHoldForUser(userId: string, input: ReservationHoldInput) {
   const parsed = createReservationSchema.safeParse({
@@ -87,10 +67,12 @@ export async function createHoldForUser(userId: string, input: ReservationHoldIn
       }
     }
 
+    await expireStaleReservationHolds(tx, parsed.data.spaceId);
+
     const conflict = await findBlockingReservation(tx, parsed.data.spaceId, parsed.data.startAt, parsed.data.endAt);
 
     if (conflict) {
-      throw new Error('The selected time slot is already reserved or on temporary hold.');
+      throw new ReservationAvailabilityError(SLOT_UNAVAILABLE, 'The selected time slot is already reserved or on temporary hold.');
     }
 
     try {
@@ -127,17 +109,18 @@ export async function confirmHold(userId: string, reservationId: string, adminOv
     }
 
     if (hold.expiresAt && new Date(hold.expiresAt) <= new Date()) {
-      throw new Error('This hold has expired and can no longer be confirmed.');
+      throw new ReservationAvailabilityError(HOLD_EXPIRED, 'This hold has expired and can no longer be confirmed.', 409);
     }
 
     if (!adminOverride && hold.userId !== userId) {
       throw new Error('Forbidden.');
     }
 
-    const conflict = await findBlockingReservation(tx, hold.spaceId, hold.startAt, hold.endAt, hold.id);
+    await expireStaleReservationHolds(tx, hold.spaceId);
+    const conflict = await findBlockingReservation(tx, hold.spaceId, hold.startAt, hold.endAt, undefined, hold.id);
 
     if (conflict) {
-      throw new Error('This interval is no longer available.');
+      throw new ReservationAvailabilityError(SLOT_UNAVAILABLE, 'This interval is no longer available.');
     }
 
     return tx.reservation.update({

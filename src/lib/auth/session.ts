@@ -1,16 +1,12 @@
 import type { UserRole } from '@prisma/client';
 
+import type { AuthenticatedUser } from '@/types';
 import { verifyAccessToken } from './tokens';
 
 export const authCookieNames = {
   accessToken: 'cospace_access',
   refreshToken: 'cospace_refresh',
 } as const;
-
-export type AuthenticatedUser = {
-  id: string;
-  role: UserRole;
-};
 
 export async function getAuthenticatedUserFromAccessToken(token: string): Promise<AuthenticatedUser> {
   const payload = await verifyAccessToken(token);

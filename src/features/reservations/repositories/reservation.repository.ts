@@ -1,18 +1,8 @@
 import { Prisma, type Reservation, type ReservationStatus } from '@prisma/client';
 
+import type { ReservationListOptions } from '@/features/reservations/types/reservation';
+import type { ReservationFilters } from '@/types';
 import { prisma } from '@/lib/db/prisma';
-
-export type ReservationFilters = {
-  userId?: string;
-  spaceId?: string;
-  status?: ReservationStatus | 'IN_PROCESS';
-};
-
-export type ReservationListOptions = {
-  skip: number;
-  take: number;
-  filters?: ReservationFilters;
-};
 
 export async function findReservations({ skip, take, filters }: ReservationListOptions) {
   const where: Prisma.ReservationWhereInput = {};

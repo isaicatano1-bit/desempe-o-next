@@ -1,17 +1,8 @@
-import { Prisma, type Space, type SpaceType } from '@prisma/client';
+import { Prisma, type Space } from '@prisma/client';
 
+import type { SpaceListOptions } from '@/features/spaces/types/space';
+import type { SpaceFilters } from '@/types';
 import { prisma } from '@/lib/db/prisma';
-
-export type SpaceFilters = {
-  isActive?: boolean;
-  type?: SpaceType;
-};
-
-export type SpaceListOptions = {
-  skip: number;
-  take: number;
-  filters?: SpaceFilters;
-};
 
 export async function findSpaces({ skip, take, filters }: SpaceListOptions) {
   const where: Prisma.SpaceWhereInput = {};

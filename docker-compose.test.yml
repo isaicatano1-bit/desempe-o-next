@@ -1,21 +1,18 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: postgres:16
     container_name: cospace-postgres-test
     restart: unless-stopped
     environment:
-      POSTGRES_USER: cospace_test
-      POSTGRES_PASSWORD: cospace_test_password
+      POSTGRES_USER: cospace
+      POSTGRES_PASSWORD: cospace
       POSTGRES_DB: cospace_test
     ports:
       - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cospace_test -d cospace_test"]
+      test: ["CMD-SHELL", "pg_isready -U cospace -d cospace_test"]
       interval: 5s
       timeout: 5s
       retries: 10
-    volumes:
-      - postgres_test_data:/var/lib/postgresql/data
-
-volumes:
-  postgres_test_data:

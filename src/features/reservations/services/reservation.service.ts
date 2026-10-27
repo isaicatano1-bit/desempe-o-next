@@ -14,6 +14,8 @@ import type {
   ListReservationsQuery,
   UpdateReservationInput,
 } from '@/features/reservations/schemas/reservation.schema';
+import { ReservationAvailabilityError, SLOT_UNAVAILABLE, buildBlockingReservationWhere, expireStaleReservationHolds, findBlockingReservation } from '@/features/reservations/services/availability';
+import type { ReservationListResult } from '@/features/reservations/types/reservation';
 import { prisma } from '@/lib/db/prisma';
 
 async function withSpaceLock<T>(spaceId: string, callback: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
@@ -22,36 +24,6 @@ async function withSpaceLock<T>(spaceId: string, callback: (tx: Prisma.Transacti
     return callback(tx);
   });
 }
-
-async function findBlockingReservation(tx: Prisma.TransactionClient, spaceId: string, startAt: Date, endAt: Date, excludeReservationId?: string) {
-  return tx.reservation.findFirst({
-    where: {
-      spaceId,
-      ...(excludeReservationId ? { id: { not: excludeReservationId } } : {}),
-      OR: [
-        {
-          status: 'CONFIRMED',
-          startAt: { lt: endAt },
-          endAt: { gt: startAt },
-        },
-        {
-          status: 'IN_PROCESS',
-          expiresAt: { gt: new Date() },
-          startAt: { lt: endAt },
-          endAt: { gt: startAt },
-        },
-      ],
-    },
-  });
-}
-
-export type ReservationListResult = {
-  items: Awaited<ReturnType<typeof findReservations>>;
-  totalCount: number;
-  totalPages: number;
-  page: number;
-  pageSize: number;
-};
 
 export async function listReservationsForUser(userId: string, input: ListReservationsQuery): Promise<ReservationListResult> {
   const page = input.page;
@@ -121,9 +93,11 @@ export async function createReservationRecord(userId: string, input: CreateReser
       throw new Error('Selected space is not available.');
     }
 
+    await expireStaleReservationHolds(tx, input.spaceId);
+
     const conflict = await findBlockingReservation(tx, input.spaceId, input.startAt, input.endAt);
     if (conflict) {
-      throw new Error('The selected time slot is already booked.');
+      throw new ReservationAvailabilityError(SLOT_UNAVAILABLE, 'The selected time slot is already booked or temporarily held.');
     }
 
     const totalPrice = new Prisma.Decimal((Number(space.hourlyPrice) * durationInHours).toFixed(2));
@@ -175,10 +149,11 @@ export async function updateReservationRecord(id: string, input: UpdateReservati
 
     const nextStart = input.startAt ?? latest.startAt;
     const nextEnd = input.endAt ?? latest.endAt;
-    const conflict = await findBlockingReservation(tx, latest.spaceId, nextStart, nextEnd, latest.id);
+    await expireStaleReservationHolds(tx, latest.spaceId);
+    const conflict = await findBlockingReservation(tx, latest.spaceId, nextStart, nextEnd, undefined, latest.id);
 
     if (conflict) {
-      throw new Error('This interval is no longer available.');
+      throw new ReservationAvailabilityError(SLOT_UNAVAILABLE, 'This interval is no longer available.');
     }
 
     return tx.reservation.update({

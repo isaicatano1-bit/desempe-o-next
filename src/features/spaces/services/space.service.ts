@@ -1,4 +1,4 @@
-import type { Prisma, Space, SpaceType } from '@prisma/client';
+import type { Prisma, Space } from '@prisma/client';
 
 import {
   countSpaces,
@@ -9,14 +9,7 @@ import {
   updateSpaceById,
 } from '@/features/spaces/repositories/space.repository';
 import type { CreateSpaceInput, ListSpacesQuery, UpdateSpaceInput } from '@/features/spaces/schemas/space.schema';
-
-export type SpaceListResult = {
-  items: Space[];
-  totalCount: number;
-  totalPages: number;
-  page: number;
-  pageSize: number;
-};
+import type { SpaceListResult } from '@/features/spaces/types/space';
 
 export async function listSpaces(input: ListSpacesQuery): Promise<SpaceListResult> {
   const page = input.page;

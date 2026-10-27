@@ -11,6 +11,7 @@ vi.mock('@/lib/db/prisma', () => ({
       findFirst: vi.fn(),
       create: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     space: {
       findUnique: vi.fn(),
@@ -46,6 +47,7 @@ describe('reservation lifecycle rules', () => {
           }),
           findUnique: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
       };
 
@@ -89,6 +91,7 @@ describe('reservation lifecycle rules', () => {
           create: vi.fn(),
           findUnique: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
       };
 
@@ -122,6 +125,7 @@ describe('reservation lifecycle rules', () => {
           findFirst: vi.fn().mockResolvedValue(null),
           update: vi.fn(),
           create: vi.fn(),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
         space: {
           findUnique: vi.fn(),
@@ -149,6 +153,7 @@ describe('reservation lifecycle rules', () => {
           update: vi.fn(),
           create: vi.fn(),
           findFirst: vi.fn(),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
         space: {
           findUnique: vi.fn(),
@@ -184,6 +189,7 @@ describe('reservation lifecycle rules', () => {
           create: vi.fn(),
           findUnique: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn().mockResolvedValue({ count: 0 }),
         },
       };
 
