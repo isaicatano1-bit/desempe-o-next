@@ -1,4 +1,5 @@
 import { LogOut } from 'lucide-react';
+import { LanguageToggle } from '@/components/explorar/LanguageToggle';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
@@ -27,15 +28,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <h1 className="mt-1 text-2xl font-semibold tracking-[-0.05em] text-[#222D28]">Administración</h1>
           </div>
 
-          <form action="/api/v1/auth/logout" method="POST">
-            <button
-              type="submit"
-              className="inline-flex items-center gap-2 rounded-[10px] border border-[#DEDED5] bg-[#F7F6F2] px-3 py-2 text-sm font-semibold text-[#222D28] transition hover:bg-[#F0F2EE]"
-            >
-              <LogOut className="h-4 w-4" />
-              Cerrar sesión
-            </button>
-          </form>
+          <div className="flex items-center gap-2">
+            <LanguageToggle />
+            <form action="/api/v1/auth/logout" method="POST">
+              <button
+                type="submit"
+                className="inline-flex items-center gap-2 rounded-[10px] border border-[#DEDED5] bg-[#F7F6F2] px-3 py-2 text-sm font-semibold text-[#222D28] transition hover:bg-[#F0F2EE]"
+              >
+                <LogOut className="h-4 w-4" />
+                Cerrar sesión
+              </button>
+            </form>
+          </div>
         </div>
         {children}
       </div>

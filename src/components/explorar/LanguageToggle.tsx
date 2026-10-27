@@ -11,7 +11,11 @@ export function LanguageToggle() {
 
   useEffect(() => {
     const saved = window.localStorage.getItem('cospace-language');
-    if (saved === 'en' || saved === 'es') setLanguage(saved);
+    if (saved === 'en' || saved === 'es') {
+      setLanguage(saved);
+      document.documentElement.lang = saved;
+      window.dispatchEvent(new CustomEvent(LANGUAGE_EVENT, { detail: saved }));
+    }
   }, []);
 
   const toggle = () => {

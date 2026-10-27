@@ -55,6 +55,7 @@ export function Header({ variant = 'user' }: { variant?: 'visitor' | 'user' }) {
     const savedLanguage = window.localStorage.getItem('cospace-language') as Language | null;
     if (savedLanguage === 'en' || savedLanguage === 'es') {
       setLanguage(savedLanguage);
+      window.dispatchEvent(new CustomEvent(LANGUAGE_EVENT, { detail: savedLanguage }));
     }
     document.documentElement.lang = savedLanguage ?? 'es';
     const syncLanguage = (event: Event) => {
@@ -64,11 +65,6 @@ export function Header({ variant = 'user' }: { variant?: 'visitor' | 'user' }) {
     window.addEventListener(LANGUAGE_EVENT, syncLanguage);
     return () => window.removeEventListener(LANGUAGE_EVENT, syncLanguage);
   }, []);
-
-  useEffect(() => {
-    document.documentElement.lang = language;
-    window.localStorage.setItem('cospace-language', language);
-  }, [language]);
 
   useEffect(() => {
     let isMounted = true;

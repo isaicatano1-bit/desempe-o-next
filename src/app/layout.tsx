@@ -1,5 +1,6 @@
 import './globals.css';
 import type { Metadata } from 'next';
+import { LanguageSync } from '@/components/explorar/LanguageSync';
 
 export const metadata: Metadata = {
   title: 'CoSpace',
@@ -8,8 +9,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body>{children}</body>
+    <html lang="es">
+      <body>
+        <LanguageSync />
+        {children}
+      </body>
     </html>
   );
 }
