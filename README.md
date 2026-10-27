@@ -166,6 +166,29 @@ La aplicación quedará disponible normalmente en:
 http://localhost:3000
 ```
 
+## Ejecutar con Docker
+
+Define secretos JWT en un archivo `.env` en la raíz del proyecto:
+
+```bash
+JWT_ACCESS_SECRET="un_secreto_de_acceso_largo_y_seguro"
+JWT_REFRESH_SECRET="otro_secreto_de_refresh_largo_y_distinto"
+```
+
+Construye la imagen y levanta la aplicación con PostgreSQL:
+
+```bash
+docker compose up --build -d
+```
+
+La aplicación estará en `http://localhost:3000`. Al iniciar, espera a que PostgreSQL esté listo y aplica las migraciones Prisma. Para detener los servicios:
+
+```bash
+docker compose down
+```
+
+La imagen generada se llama `cospace:latest`. Para borrar también los datos persistidos de PostgreSQL, usa `docker compose down -v`.
+
 ## Scripts disponibles
 
 ```bash
