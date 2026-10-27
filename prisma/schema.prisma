@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  USER
+  ADMIN
+}
+
+enum SpaceType {
+  DESK
+  MEETING_ROOM
+  PHONE_BOOTH
+}
+
+enum ReservationStatus {
+  CONFIRMED
+  IN_PROCESS
+  CANCELLED
+}
+
+model User {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String
+  role         UserRole  @default(USER)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  reservations Reservation[]
+  refreshTokens RefreshToken[]
+
+  @@index([email])
+}
+
+model Space {
+  id          String    @id @default(cuid())
+  name        String
+  description String
+  type        SpaceType
+  capacity    Int
+  hourlyPrice Decimal   @db.Decimal(10, 2)
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  reservations Reservation[]
+
+  @@index([isActive, type])
+  @@index([name])
+}
+
+model Reservation {
+  id             String            @id @default(cuid())
+  userId         String
+  spaceId        String
+  startAt        DateTime
+  endAt          DateTime
+  totalPrice     Decimal           @db.Decimal(10, 2)
+  status         ReservationStatus @default(CONFIRMED)
+  expiresAt      DateTime?
+  idempotencyKey String?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  space Space @relation(fields: [spaceId], references: [id], onDelete: Restrict)
+
+  @@unique([userId, idempotencyKey])
+  @@index([userId, startAt])
+  @@index([spaceId, startAt])
+  @@index([status, startAt])
+  @@index([spaceId, status, startAt])
+  @@index([spaceId, expiresAt])
+}
+
+model RefreshToken {
+  id        String    @id @default(cuid())
+  userId    String
+  tokenHash String    @unique
+  expiresAt DateTime
+  revokedAt DateTime?
+  createdAt DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
